@@ -1,3 +1,4 @@
+![Static Badge](https://img.shields.io/badge/npm-v9.5.1-blue) ![Static Badge](https://img.shields.io/badge/nodejs-v18.16.1-blue) ![Static Badge](https://img.shields.io/badge/vue-v3.2.13-blue) ![Static Badge](https://img.shields.io/badge/starknet-v5.14.1-blue)  ![Static Badge](https://img.shields.io/badge/ethers-v6.7.0-blue) [![Static Badge](https://img.shields.io/badge/view_twitter-black)](https://twitter.com/senokel)
 # fast-exchange
 
 ## Project setup
