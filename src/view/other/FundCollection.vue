@@ -99,12 +99,14 @@ export default {
       this.coinList = this.currencyMap[chainName];
       // 初始化provider
       if (chainName === 'Starknet') {
-        this.provider = new Provider({ 
-              sequencer: {
-                network: constants.NetworkName.SN_MAIN,
-                headers: {"Origin": "https://starkscan.co", "Referer": "https://starkscan.co/"}
-              }
-            });
+        // this.provider = new Provider({ 
+        //       sequencer: {
+        //         network: constants.NetworkName.SN_MAIN,
+        //         headers: {"Origin": "https://starkscan.co", "Referer": "https://starkscan.co/"}
+        //       }
+        //     });
+        this.provider = new RpcProvider({ nodeUrl: "https://starknet-mainnet.public.blastapi.io/" });
+        // this.provider = new SequencerProvider({ baseUrl: constants.BaseUrl.SN_GOERLI });
       } else if (chainName === 'ETH_ERC20') {
         this.provider = ethers.getDefaultProvider()
 
@@ -172,23 +174,26 @@ export default {
 
     async starknetCollect(privateKey, sender, receiver, amount) {
 
-      let account = new Account(this.provider, sender, privateKey);
+      let account = new Account(this.provider, sender, privateKey, '1');
       let call = {
         contractAddress: this.coinSelected.contract,
         entrypoint: "transfer",
         calldata: CallData.compile({
-          recipient: receiver,
+          recipient: cairo.felt(receiver),
           amount: cairo.uint256(amount * this.coinSelected.decimals),
         }),
       }
       let nonce = await account.getNonce();
+      console.log(nonce)
       let detail = this.getTxDetail(nonce);
       let txHash = "";
-      await account.execute([call], null, detail).then(async res => {
+      // console.log(call)
+      await account.execute(call, null, detail).then(async res => {
 
         await this.pushLog(`地址: ${sender}交易发送成功, 交易hash: ${res.transaction_hash}`);
         txHash = res.transaction_hash;
       }).catch(async err => {
+        console.dir(err)
         await this.pushLog(`地址: ${sender}交易发送失败, 错误信息: ${err}`);
       })
 
@@ -208,8 +213,11 @@ export default {
       if (txHash && txHash != "" && this.chainnetSelected.chainName === 'Starknet') {
         let receipt = null;
         do {
-          receipt = await this.provider.getTransactionReceipt(BigInt(txHash));
-          console.log(`状态:${receipt.status};`)
+          
+          // receipt = await this.provider.getTransactionReceipt(BigInt(txHash));
+          receipt = await this.provider.waitForTransaction(BigInt(txHash));
+          console.dir(receipt);
+          console.log(`状态:${receipt.finality_status};`)
           await DateUtils.sleep(3000);
         } while(receipt.status === 'RECEIVED' || receipt.status === 'NOT_RECEIVED')
 
@@ -231,8 +239,8 @@ export default {
     getTxDetail(nonce) {
       return {
         nonce: BigInt(nonce),
-        maxFee: 562599728671638n,
-        version: 0n,
+        maxFee: 602599728671638n,
+        version: 1n,
       };
     },
 
